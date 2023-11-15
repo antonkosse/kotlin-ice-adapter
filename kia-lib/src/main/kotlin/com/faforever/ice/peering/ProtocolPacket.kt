@@ -6,14 +6,15 @@ sealed interface ProtocolPacket {
     val prefix: Byte
     fun toByteArray(): ByteArray
 
-    fun buildWireData() = byteArrayOf(prefix) + toByteArray()
+    fun buildPrefixedWireData() = byteArrayOf(prefix) + toByteArray()
 }
 
 data class GameDataPacket(val data: ByteArray) : ProtocolPacket {
     companion object {
         const val PREFIX = 'd'.code.toByte()
 
-        fun fromWire(wireData: ByteArray) = GameDataPacket(wireData.copyOfRange(1, wireData.lastIndex))
+        // copyOfRange toIndex is EXCLUSIVE! Thus, we don't use .lastIndex, but .size
+        fun fromWire(wireData: ByteArray) = GameDataPacket(wireData.copyOfRange(fromIndex = 1, toIndex = wireData.size))
     }
 
     override val prefix = PREFIX

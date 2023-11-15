@@ -61,6 +61,8 @@ class AgentWrapper(
     private fun setState(newState: IceState) {
         if (state == newState) return
 
+        logger.debug { "ICE state changed from $state -> $newState" }
+
         val oldState = this.state
         state = newState
 
@@ -80,13 +82,7 @@ class AgentWrapper(
                     }
                 }
                 coturnServers.forEach {
-                    addCandidateHarvester(StunCandidateHarvester(it.toTCPTransport()))
-//                    addCandidateHarvester(
-//                        TurnCandidateHarvester(
-//                            it.toTCPTransport(),
-//                            LongTermCredential("user", "password")
-//                        )
-//                    )
+                    addCandidateHarvester(StunCandidateHarvester(it.toUDPTransport()))
                 }
             }.also {
                 mediaStream = it.createMediaStream("faData")
@@ -192,7 +188,9 @@ class AgentWrapper(
         val packet = DatagramPacket(readBuffer, readBuffer.size)
         checkNotNull(component).selectedPair.iceSocketWrapper.receive(packet)
 
-        return readBuffer.copyOfRange(0, packet.length)
+        val data = readBuffer.copyOfRange(0, packet.length)
+        logger.trace { "Received data from Ice4j socket on port $port (${data.size} bytes)" }
+        return data
     }
 
     @Throws(IOException::class)
